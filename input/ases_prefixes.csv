@@ -1,0 +1,35 @@
+ASN;Prefix;Country;Desc_AS
+463;139.241.19.0/24;USA;Air Force Systems Networking
+467;199.124.116.0/23;USA;Air Force Systems Networking
+20940;2.17.166.0/24;cripto;Akamai
+16509;108.158.120.0/21;cripto;Amazon
+18220;202.12.69.0/24;Australia;Australian Defence Organisation
+51733;91.209.254.0/24;Germany;BWI GmbH
+270710;177.152.120.0/22 ;Brazil;Centro de Computacao da Aeronautica de Brasília
+52890;177.8.80.0/20;Brazil;Centro Integrado de Telematica do Exercito
+4230;187.29.162.0/24;Brazil;Claro S/A
+13335;104.18.96.0/20;Saudi Arabia;Cloudflare
+28301;189.38.64.0/20;Brazil;Departamento de Educacao e Cultura do Exercito
+721;199.252.32.0/20;USA;DoD Network Information Center
+27064;6.16.136.0/24;USA;DoD Network Information Center
+27066;131.250.240.0/23;USA;DoD Network Information Center 
+1733;134.229.68.0/24;USA;DoD Network Information Center 
+264792;200.23.207.0/24;Argentina;Fuerza Aerea Argentina
+12891;193.110.208.0/24;Turkey;Genel Kurmay Baskanligi
+615;155.85.163.0/24;USA;Headquarters, USAISC
+19551;107.154.134.0/24;cripto;Incapsula
+139057;156.225.111.0/24;China;LEGEND DYNASTY PTE. LTD.
+210026;151.90.0.0/16;Italy;Ministero della Difesa
+23799;202.25.82.0/24;Japan;National Defense Academy
+4758;164.100.240.0/20;India;National Informatics Centre
+17841;116.67.0.0/17;Korea;NATIONAL INFORMATION RESOURCES SERVICE
+2749;160.127.0.0/16;USA;Navy Network Information Center (NNIC)
+1772;128.160.128.0/17;USA;Navy Network Information Center (NNIC)
+2914;117.103.185.0/24;Japan;NTT America, inc
+48421;2.63.192.0/24;Russia;PJSC Rostelecom
+134620;103.203.76.0/24;Indonesia;Pusinfolahta TNI
+2665;167.43.0.0/16;Canada;Shared Services Canada
+37130;164.146.0.0/15;South Africa;State Information Technology Agency SOC Ltd
+38157;103.147.231.0/24;Indonesia;Tentara Nasional Indonesia Angkatan Udara (TNI-AU)
+152095;116.199.205.0/24;Australia;ThreatDefence
+27065;131.250.242.0/24;USA;United States Department of Defense (DoD)
