@@ -5,10 +5,8 @@ import random
 import pickle as pk
 import ssl
 import urllib.request
-from select import select
-
 from netcalc_ipv4 import Prefix
-import logging
+
 
 class AS(object):
     def __init__(self, asn:int, description:str=''):
