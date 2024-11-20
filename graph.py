@@ -750,8 +750,7 @@ class Graph:
                                         conn = 'customer'
                                     self.ases[asn].add_route([prefix],asp, hijack)
                                     more_routes.add(asn)
-                                    logger.error(
-                                        'Gao-Rexford ERROR: AS{} added route to {} from AS{} ({}).'.format(asn, prefix, n, conn))
+                                    print('Gao-Rexford ERROR: AS{} added route to {} from AS{} ({}).'.format(asn, prefix, n, conn))
                                     break
                         if len(neighbors) == 0:
                             try_again = True
@@ -985,7 +984,6 @@ class Graph:
                 self.ases[asn].description += '({} - {})'.format(vps[asn]['name'], vps[asn]['collector'])
                 total_vps.append(asn)
         print('From {} VPS, {} ASes were found in the graph and will be considered VPS based on information from RouteViews and/or RIPE-RIS.'.format(len(vps), len(total_vps)))
-        logger.info('VPS:{}'.format(total_vps))
         self.vps = vps
         return vps
 
