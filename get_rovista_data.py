@@ -49,7 +49,7 @@ def get_rovista(ases:set,folder:str, override:bool=False):
     for asn in ases:
         i += 1
         bar.update(i)
-        file_name = '{}/{}.txt'.format(folder,asn) # need to change to .json file
+        file_name = '{}/{}.json'.format(folder,asn)
         files.append(file_name)
         if os.path.isfile(file_name) and not override:
             continue
@@ -91,7 +91,7 @@ def rov_enabled(files:list, date_target:str, folder:str, min_ratio:float=0.5, ov
         except:
             print('Fail to load file ({}). Recalculating ...'.format(outfile))
     if calculate:
-        date_target = datetime.strptime(date_target, "%y-%m-%d")
+        date_target = datetime.strptime(date_target, "%Y-%M-%d")
         print('Reading .json files and selecting ASes with ROV enabled:')
         bar = progressbar.ProgressBar(max_value=len(files), redirect_stdout=True)
         i=0
@@ -103,7 +103,7 @@ def rov_enabled(files:list, date_target:str, folder:str, min_ratio:float=0.5, ov
             for asnd in asndata:
                 asn = asnd['asnDateKey']['asn']
                 r_date = asnd['asnDateKey']['recordDate']
-                r_date = datetime.strptime(r_date, "%y-%m-%d")
+                r_date = datetime.strptime(r_date, "%Y-%M-%d")
                 if r_date >= date_target:
                     ratio = asnd['ratio']
                     if ratio >= min_ratio:
