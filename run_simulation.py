@@ -41,6 +41,9 @@ def run_analise(internet:Graph, victim:int, prefix:str, hijackers:list, outfile:
     :param roa: Enable ROA (Route Origin Authorization) from AS victim
     :return:
     '''
+    internet.add_prefix(victim, prefix, roa)
+    internet.route_propagate(victim, hijack=False, ignore_model_sometimes=True)
+    prefixes_hjk = prefix
     for i, asn_hjk in enumerate(hijackers):
         fakes_asp = list()
         if type0:
@@ -49,9 +52,6 @@ def run_analise(internet:Graph, victim:int, prefix:str, hijackers:list, outfile:
             fakes_asp.append([victim])
         print('####### Start AS{} - Hijacker AS{} ({}/{}) ########'.format(victim, asn_hjk, i+1, len(hijackers)))
         start = time()
-        internet.add_prefix(victim, prefix, roa)
-        prefixes_hjk = prefix
-        internet.route_propagate(victim, hijack=False, ignore_model_sometimes=True)
         print("Route from AS{} propagated in {:.4f} seconds.".format(victim, time() - start))
         print("Route from AS{} propagated in {:.4f} seconds.".format(victim, time() - start), file=logs)
         for fake_asp in fakes_asp:
