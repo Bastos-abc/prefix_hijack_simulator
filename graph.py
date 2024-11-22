@@ -829,7 +829,7 @@ class Graph:
                 asps += tmp
         result = []
         for prefix, asp in asps:
-            asp_type, sequence = self.asp_type(asp, hijack_type=len(fake_asp))
+            asp_type, sequence = self.asp_type(asp)
             result.append([prefix, asp, asp_type, sequence])
         lines = 'Prefix;AS_path;Type;Sequence'
         line = '\n{};{};{};{}'
