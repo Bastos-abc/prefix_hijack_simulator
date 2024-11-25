@@ -882,7 +882,7 @@ class Graph:
             line = '\n{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{}'
             if not os.path.isfile(outfile):
                 lines = ('Prefix_leg;Leg_ASN;Description_leg;Country_leg;Continent_leg;Customer_leg;Providers_leg;Peers_leg;Degree_leg;ROA;'
-                         'Prefix_hjk;Hijacker;Description_hjk;Country_hjk;Continent_hjk;Customer_hjk;Providers_hjk;Peers_hjk;Degree_hk;Forged_AS_path;Type;'
+                         'Prefix_hjk;Hijacker;Description_hjk;Country_hjk;Continent_hjk;Customer_hjk;Providers_hjk;Peers_hjk;Degree_hjk;Forged_AS_path;Type;'
                          'Total_ASes;Contaminated_ASes;VPs_observ_hjk;ROV')
             lines += line.format(p_leg,asn_leg,desc_leg,count_leg,cont_leg,cus_leg,prov_leg,peers_leg,degree_leg,roa,
                                  p_hjk,asn_hjk,desc_hjk,count_hjk,cont_hjk,cus_hjk,prov_hjk,peers_hjk,degree_hjk,fake_asp,len(fake_asp),

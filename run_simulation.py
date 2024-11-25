@@ -153,9 +153,9 @@ if __name__ == '__main__':
     print('Starting first simulation.')
     start = time()
     # File to save simulation data
-    outfile = './logs/result_with_clusters_and_rov.csv'
+    outfile = './logs/result_with_clusters_and_rov_0.25.csv'
     hjks = load_hijackers(internet2, nb_hijackers, clusters, input_hjks)
-    r_ases = ases_rov(ases=internet2.get_ases(), date_target=date_file, folder='./data', min_ratio=0.5)
+    r_ases = ases_rov(ases=internet2.get_ases(), date_target=date_file, folder='./data', min_ratio=0.25)
     internet2.enable_rov(ases=r_ases)
     run_simulation(internet2,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
     print("All execution took {:.4f} seconds".format(time() - start), file=logs)
