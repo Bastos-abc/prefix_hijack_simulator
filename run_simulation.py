@@ -20,7 +20,7 @@ def load_internet(input_file:str):
     :param input_file: file (AS relationship from CAIDA)
     :return: Graph object
     '''
-    internet = Graph(override=False)
+    internet = Graph(override=False,debug=False)
     start = time()
     internet.add_connections(input_file=input_file)
     print("Load the connections took {:.4f} seconds".format(time() - start))
@@ -28,7 +28,8 @@ def load_internet(input_file:str):
     return internet
 
 
-def run_analise(internet:Graph, victim:int, prefix:str, hijackers:list, outfile:str, type0:bool=True, type1:bool=True, roa:bool=True):
+def run_analise(internet:Graph, victim:int, prefix:str, hijackers:list, outfile:str, type0:bool=True,
+                type1:bool=True, roa:bool=True):
     '''
     Run the simulation and save the results in a file
     :param internet: Graph object used to base for the simulation
@@ -41,31 +42,34 @@ def run_analise(internet:Graph, victim:int, prefix:str, hijackers:list, outfile:
     :param roa: Enable ROA (Route Origin Authorization) from AS victim
     :return:
     '''
-    internet.add_prefix(victim, prefix, roa)
-    internet.route_propagate(victim, hijack=False, ignore_model_sometimes=True)
-    prefixes_hjk = prefix
-    for i, asn_hjk in enumerate(hijackers):
-        fakes_asp = list()
-        if type0:
-            fakes_asp.append([])
-        if type1:
-            fakes_asp.append([victim])
-        print('####### Start AS{} - Hijacker AS{} ({}/{}) ########'.format(victim, asn_hjk, i+1, len(hijackers)))
-        start = time()
-        print("Route from AS{} propagated in {:.4f} seconds.".format(victim, time() - start))
-        print("Route from AS{} propagated in {:.4f} seconds.".format(victim, time() - start), file=logs)
-        for fake_asp in fakes_asp:
-            inter2 = deepcopy(internet)
-            print('####### Forged AS path:', fake_asp)
-            # Make prefix hijack
-            inter2.hijack(asn_hjk, prefixes_hjk, fake_asp)
+    added = internet.add_prefix(victim, prefix, roa)
+    if added:
+        internet.route_propagate(victim, hijack=False, ignore_model_sometimes=True)
+        prefixes_hjk = prefix
+        for i, asn_hjk in enumerate(hijackers):
+            fakes_asp = list()
+            if type0:
+                fakes_asp.append([])
+            if type1:
+                fakes_asp.append([victim])
+            print('####### Start AS{} - Hijacker AS{} ({}/{}) ########'.format(victim, asn_hjk, i+1, len(hijackers)))
             start = time()
-            inter2.route_propagate(asn_hjk, hijack=True, ignore_model_sometimes=True)
-            print("Hijack route from AS{} propagated in {:.4f} seconds".format(asn_hjk, time() - start,))
-            print("Hijack route from AS{} propagated in {:.4f} seconds".format(asn_hjk, time() - start, ), file=logs)
-            inter2.text_report(outfile, export_asp=True)
-            del inter2
-            #inter2.restart_graph()
+            print("Route from AS{} propagated in {:.4f} seconds.".format(victim, time() - start))
+            print("Route from AS{} propagated in {:.4f} seconds.".format(victim, time() - start), file=logs)
+            for fake_asp in fakes_asp:
+                inter2 = deepcopy(internet)
+                print('####### Forged AS path:', fake_asp)
+                # Make prefix hijack
+                inter2.hijack(asn_hjk, prefixes_hjk, fake_asp)
+                start = time()
+                inter2.route_propagate(asn_hjk, hijack=True, ignore_model_sometimes=True)
+                print("Hijack route from AS{} propagated in {:.4f} seconds".format(asn_hjk, time() - start,))
+                print("Hijack route from AS{} propagated in {:.4f} seconds".format(asn_hjk, time() - start, ), file=logs)
+                inter2.text_report(outfile, export_asp=True)
+                del inter2
+                #inter2.restart_graph()
+    else:
+        print('Fail to run the simulation with AS{} as victim.'.format(victim))
 
 
 def select_hijackers(internet:Graph, nb_hijackers:int, clusters:list):
@@ -93,7 +97,8 @@ def load_hijackers(internet:Graph, nb_hijackers:int, clusters:list, input_hjks:s
     return hjks
 
 
-def run_simulation(internet:Graph, hjks:list, analyse:list,outfile:str,n_threads:int=1, clear_tmp:bool=True, type0:bool=True, type1:bool=True, roa:bool=True):
+def run_simulation(internet:Graph, hjks:list, analyse:list,outfile:str,n_threads:int=1, clear_tmp:bool=True,
+                   type0:bool=True, type1:bool=True, roa:bool=True):
     args = []
     files = []
     outfile_tmp = outfile.replace('.csv','_{}.tmp')
@@ -103,10 +108,14 @@ def run_simulation(internet:Graph, hjks:list, analyse:list,outfile:str,n_threads
         args.append([internet, asn, prefix, hjks, tmp_f, type0, type1, roa])
     with Pool(processes=n_threads) as th_pool:
         th_pool.starmap(run_analise, args, )
-
-    cmd = 'head -n 1 {} > {}'.format(files[0], outfile)
-    os.system(cmd)
+    first_line = True
     for f in files:
+        if not os.path.isfile(f):
+            continue
+        if first_line:
+            cmd = 'head -n 1 {} > {}'.format(files[0], outfile)
+            os.system(cmd)
+            first_line = False
         cmd = 'cat ' + f + ' | grep "^{" >> '+ outfile
         os.system(cmd)
         if clear_tmp:
@@ -117,10 +126,11 @@ if __name__ == '__main__':
     # CSV file with at least two columns ('ASN','Prefix') separated by ';'
     input_file_prefix = 'input/ases_prefixes.csv'
     # File to load or save a list of hijackers
-    input_hjks = 'input/hijackers.pk'
+    #input_hjks = 'input/hijackers.pk'
+    input_hjks = 'input/hijackers-test.pk'
     # path and name of CAIDA's AS relationship file
-    input_file = 'input/20241001.as-rel2.txt.bz2'
-    date_file = '2024-10-01'
+    input_file = 'input/20240201.as-rel2.txt.bz2'
+    date_file = '2024-02-01'
     # number of hijackers per cluster
     nb_hijackers = 150
     # range to create ASes cluster by degree
@@ -136,29 +146,99 @@ if __name__ == '__main__':
     internet.get_country_ases()
 
 
-    # First simulation (ROV disable, Type-0 and Type-1 hijacks)
+    # simulation (ROV disable, Type-0 and Type-1 hijacks)
+    folder = './without_rov'
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+    outfile = '{}/result_20240201.csv'.format(folder)
     internet1 = deepcopy(internet)
-    print('Starting first simulation.')
+    print('Starting simulation.')
     start = time()
     # File to save simulation data
-    outfile = './logs/result_with_clusters.csv'
     hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
     run_simulation(internet1,hjks, analyse, outfile, n_threads, roa=False)
     print("All execution took {:.4f} seconds".format(time() - start), file=logs)
     del internet1
 
 
-    # Second simulation (ROV enable, Type-0)
-    internet2 = deepcopy(internet)
-    print('Starting first simulation.')
+    # simulation (ROV enable, Type-0)
+    folder = './rov_1.0'
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+    outfile = '{}/result_20240201.csv'.format(folder)
+    internet1 = deepcopy(internet)
+    print('Starting simulation.')
     start = time()
     # File to save simulation data
-    outfile = './logs/result_with_clusters_and_rov_0.25.csv'
-    hjks = load_hijackers(internet2, nb_hijackers, clusters, input_hjks)
-    r_ases = ases_rov(ases=internet2.get_ases(), date_target=date_file, folder='./data', min_ratio=0.25)
-    internet2.enable_rov(ases=r_ases)
-    run_simulation(internet2,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
+    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
+    r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=1)
+    internet1.enable_rov(ases=r_ases)
+    run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
     print("All execution took {:.4f} seconds".format(time() - start), file=logs)
-    del internet2
+    del internet1
+
+    # simulation (ROV enable, Type-0)
+    folder = './rov_0.75'
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+    outfile = '{}/result_20240201.csv'.format(folder)
+    internet1 = deepcopy(internet)
+    print('Starting simulation.')
+    start = time()
+    # File to save simulation data
+    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
+    r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=0.75)
+    internet1.enable_rov(ases=r_ases)
+    run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
+    print("All execution took {:.4f} seconds".format(time() - start), file=logs)
+    del internet1
+
+    # simulation (ROV enable, Type-0)
+    folder = './rov_0.5'
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+    outfile = '{}/result_20240201.csv'.format(folder)
+    internet1 = deepcopy(internet)
+    print('Starting simulation.')
+    start = time()
+    # File to save simulation data
+    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
+    r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=0.50)
+    internet1.enable_rov(ases=r_ases)
+    run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
+    print("All execution took {:.4f} seconds".format(time() - start), file=logs)
+    del internet1
+
+    # simulation (ROV enable, Type-0)
+    folder = './rov_0.25'
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+    outfile = '{}/result_20240201.csv'.format(folder)
+    internet1 = deepcopy(internet)
+    print('Starting simulation.')
+    start = time()
+    # File to save simulation data
+    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
+    r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=0.25)
+    internet1.enable_rov(ases=r_ases)
+    run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
+    print("All execution took {:.4f} seconds".format(time() - start), file=logs)
+    del internet1
+
+    # simulation (ROV enable, Type-0)
+    folder = './rov_0.01'
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+    outfile = '{}/result_20240201.csv'.format(folder)
+    internet1 = deepcopy(internet)
+    print('Starting simulation.')
+    start = time()
+    # File to save simulation data
+    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
+    r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=0.01)
+    internet1.enable_rov(ases=r_ases)
+    run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
+    print("All execution took {:.4f} seconds".format(time() - start), file=logs)
+    del internet1
 
     logs.close()

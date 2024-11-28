@@ -5,6 +5,8 @@ import random
 import pickle as pk
 import ssl
 import urllib.request
+#from logging import debug
+
 from netcalc_ipv4 import Prefix
 
 
@@ -90,7 +92,7 @@ class AS(object):
         self.providers.add(provider)
 
 
-    def add_route(self, prefixes:list, asp:list, hijack:bool=False):
+    def add_route(self, prefixes:list, asp:list, hijack:bool=False, debug:bool=True):
         '''
         Add a route to the prefixes if they have best route
         :param prefixes: a list with Prefixes objects
@@ -108,7 +110,8 @@ class AS(object):
         if not (origen in self.peers or origen in self.customers or origen in self.providers or origen in self.siblings):
             print('ERROR: This AS ({}) is not a neighbored.'.format(origen))
         elif self.asn in asp:
-            print('Route ignored by BGP (loop). AS{} -> AS_path:{}'.format(self.asn, asp))
+            if debug:
+                print('Route ignored by BGP (loop). AS{} -> AS_path:{}'.format(self.asn, asp))
         else:
             for prefix in prefixes:
                 accept = False
@@ -280,7 +283,7 @@ class AS(object):
 
 
 class Graph:
-    def __init__(self,root_folder:str='./data', override:bool=False):
+    def __init__(self,root_folder:str='./data', override:bool=False, debug:bool=True):
         '''
         Create an object to represent AS connections.
         :param root_folder: Folder to save partial information (default = ./data)
@@ -302,6 +305,7 @@ class Graph:
         self.continents = set()
         self.root_folder = root_folder
         self.override = override
+        self.debug = debug
 
 
     def add_connections(self, input_file:str):
@@ -446,7 +450,7 @@ class Graph:
         :param asn: ASN that will announce a legitimate prefix.
         :param prefix: IPv4 prefix to announce
         :param roa: Enable Route Origin Authorization to this prefix and AS
-        :return: None
+        :return: True if the prefix was added, False if the AS is not in the graph
         '''
         if asn in self.ases.keys():
             self.ases[asn].add_prefix(prefix)
@@ -455,8 +459,11 @@ class Graph:
                 if p not in self.roa.keys():
                     self.roa[p] = set()
                 self.roa[p].add(asn)
+            return True
         else:
-            print('ERROR: AS not found in the graph!!')
+            print('ERROR: AS{} not found in the graph!!'.format(asn))
+            return False
+
 
 
     def hijack(self, hijacker:int, prefix:str, fake_asp:list):
@@ -510,18 +517,21 @@ class Graph:
                             if asp[-1] in self.roa[p]:
                                 prefix_add.append(p)
                             else:
-                                print('ROV: AS{} reject prefix {} originated by AS{}.'.format(n_asn, p, asp[-1]))
+                                if self.debug:
+                                    print('ROV: AS{} reject prefix {} originated by AS{}.'.format(n_asn, p, asp[-1]))
                 else:
                     prefix_add = prefixes
-                tmp_ases, tmp_asp, tmp_prefixes = self.ases[n_asn].add_route(prefix_add, asp, hijack)
+                tmp_ases, tmp_asp, tmp_prefixes = self.ases[n_asn].add_route(prefix_add, asp, hijack,debug=self.debug)
                 for ta in tmp_ases:
                     nexts_ases.append([ta, tmp_asp, tmp_prefixes])
             without_route = without_route - ases_new_route
-            print("{} routes propagated from the AS{} to {} ASes".format(('Hijacked' if hijack else 'Legitimate'), asn, len(ases_new_route)))
-            print('{} AS(es) did not receive the route from the AS{}'.format(len(without_route), asn))
+            if self.debug:
+                print("{} routes propagated from the AS{} to {} ASes".format(('Hijacked' if hijack else 'Legitimate'), asn, len(ases_new_route)))
+                print('{} AS(es) did not receive the route from the AS{}'.format(len(without_route), asn))
             if ignore_model_sometimes:
                 more_routes = self.ignore_model_sometimes(prefixes)
-                print('More {} ASes added the route breaking Gao-Rexford model'.format(len(more_routes)))
+                if self.debug:
+                    print('More {} ASes added the route breaking Gao-Rexford model'.format(len(more_routes)))
         return without_route
 
 
@@ -645,10 +655,8 @@ class Graph:
             connections = self.ases[asi].providers | self.ases[asi].peers | self.ases[asi].customers | self.ases[asi].siblings
             while len(connections) > 0:
                 c = connections.pop()
-                try:
+                if c in ases:
                     ases.remove(c)
-                except:
-                    print(c)
                 graphs[i].add(c)
                 tmp = self.ases[c].providers | self.ases[c].peers | self.ases[c].customers | self.ases[c].siblings
                 for t in tmp:
@@ -748,9 +756,10 @@ class Graph:
                                         conn = 'sibling'
                                     else:
                                         conn = 'customer'
-                                    self.ases[asn].add_route([prefix],asp, hijack)
+                                    self.ases[asn].add_route([prefix],asp, hijack,debug=self.debug)
                                     more_routes.add(asn)
-                                    print('Gao-Rexford ERROR: AS{} added route to {} from AS{} ({}).'.format(asn, prefix, n, conn))
+                                    if self.debug:
+                                        print('Gao-Rexford ERROR: AS{} added route to {} from AS{} ({}).'.format(asn, prefix, n, conn))
                                     break
                         if len(neighbors) == 0:
                             try_again = True
@@ -810,7 +819,7 @@ class Graph:
         return result, tmp
 
 
-    def export_hijack_as_paths(self,asn_leg:int, asn_hjk:int, ases:set, folder:str = 'AS_paths'):
+    def export_hijack_as_paths(self,asn_leg:int, asn_hjk:int, ases:set, outfile:str = 'as_paths.csv'):
         '''
         Export hijacked AS path to a file and other information (Prefix;AS_path;Type;Sequence)
         :param asn_leg: the legitimate ASN to check the hijack
@@ -820,8 +829,6 @@ class Graph:
         :return: None
         '''
         fake_asp = self.ases[asn_hjk].fake_asp
-        if not os.path.isdir(folder):
-            os.mkdir(folder)
         asps = list()
         for asn in ases:
             tmp = self.ases[asn].has_hijack()
@@ -831,23 +838,27 @@ class Graph:
         for prefix, asp in asps:
             asp_type, sequence = self.asp_type(asp)
             result.append([prefix, asp, asp_type, sequence])
-        lines = 'Prefix;AS_path;Type;Sequence'
+        if os.path.isfile(outfile):
+            lines = ''
+        else:
+            lines = 'Prefix;AS_path;Type;Sequence'
         line = '\n{};{};{};{}'
         for r in result:
             lines += line.format(r[0],r[1],r[2],r[3])
-        outfile = '{}/{}_{}_Type-{}.csv'.format(folder, asn_leg, asn_hjk,len(fake_asp))
-        with open(outfile,'w') as out:
+        with open(outfile,'a') as out:
             out.writelines(lines)
 
 
     def text_report(self, outfile:str, export_asp:bool=False, only_vps_asp:bool=True):
         '''
         Export information about hijack to a file
-        :param outfile: file will create with output information
+        :param outfile: file will create with output information (must end with .csv)
         :param export_asp: create files with hijacked AS paths
         :param only_vps_asp: Only create files with AS path from VPs
         :return: None
         '''
+        if not (outfile.endswith('.csv') or outfile.endswith('.tmp')):
+            outfile += '.csv'
         if len(self.leg_announce) == 0 or len(self.hjk_announce) == 0:
             print('To get a text report make one legitimate announce and one hijack announce first.')
         else:
@@ -889,12 +900,17 @@ class Graph:
                                  t_ases,len(hjk_ases),len(self.vps_hjk),rov)
             with open(outfile, 'a') as out:
                 out.writelines(lines)
-
+            if outfile.endswith('.csv'):
+                asp_outfile = outfile.replace('.csv', '_as-path_type-{}.csv')
+            else:
+                asp_outfile = outfile.replace('.tmp', '_as-path_type-{}.csv')
             if export_asp:
+                asp_outfile = asp_outfile.format(len(fake_asp))
                 if only_vps_asp:
-                    self.export_hijack_as_paths(asn_leg, asn_hjk, self.vps_hjk)
+                    self.export_hijack_as_paths(asn_leg, asn_hjk, self.vps_hjk, outfile=asp_outfile)
                 else:
-                    self.export_hijack_as_paths(asn_leg, asn_hjk, hjk_ases)
+                    self.export_hijack_as_paths(asn_leg, asn_hjk, hjk_ases, outfile=asp_outfile)
+
 
 
     def get_vps(self, rv:bool=True, ripe:bool=True):
