@@ -420,6 +420,43 @@ class Graph:
         return (country,continent,degree)
 
 
+    def get_neighbors_stats(self, asn:int):
+        '''
+        Return AS information
+        :return: Country, Continent and degree (number of neighbors)
+        '''
+        if asn not in self.ases.keys():
+            if self.debug:
+                print('AS{} is not in the graph!'.format(asn))
+            return None
+        customers = self.ases[asn].customers
+        providers = self.ases[asn].providers
+        peers = self.ases[asn].peers
+        neighbors = peers | customers | providers
+        countries_c = set()
+        continents_c = set()
+        for n in customers:
+            countries_c.add(self.ases[n].country)
+            continents_c.add(self.ases[n].continent)
+        countries_p = set()
+        continents_p = set()
+        for n in peers:
+            countries_p.add(self.ases[n].country)
+            continents_p.add(self.ases[n].continent)
+        countries_pr = set()
+        continents_pr = set()
+        for n in providers:
+            countries_pr.add(self.ases[n].country)
+            continents_pr.add(self.ases[n].continent)
+        countries = countries_c | countries_p | countries_pr
+        continents = continents_c | continents_p | continents_pr
+        result = {'Neighbors':{'Number':len(neighbors),'Countries':len(countries), 'Continents':len(continents)},
+                  'Customers':{'Number':len(customers),'Countries':len(countries_c), 'Continents':len(continents_c)},
+                  'Peers':{'Number':len(peers),'Countries':len(countries_p), 'Continents':len(continents_p)},
+                  'Providers':{'Number':len(providers),'Countries':len(countries_pr), 'Continents':len(continents_pr)}}
+        return result
+
+
     def print_as(self, asn:int):
         '''
         Print all AS information
@@ -441,7 +478,7 @@ class Graph:
         if asn in self.ases.keys():
             self.ases[asn].print_rib()
         else:
-            print('AS not found!')
+            print('AS{} not found!'.format(asn))
 
 
     def add_prefix(self, asn:int, prefix:str, roa:bool=False):
@@ -477,7 +514,7 @@ class Graph:
         if hijacker in self.ases.keys():
             self.ases[hijacker].hijack(prefix, fake_asp)
         else:
-            print('ERROR: AS not found in the graph!!')
+            print('ERROR: AS{} not found in the graph!!'.format(hijacker))
 
 
     def route_propagate(self, asn:int, hijack:bool=False, ignore_model_sometimes:bool=False):
@@ -910,7 +947,6 @@ class Graph:
                     self.export_hijack_as_paths(asn_leg, asn_hjk, self.vps_hjk, outfile=asp_outfile)
                 else:
                     self.export_hijack_as_paths(asn_leg, asn_hjk, hjk_ases, outfile=asp_outfile)
-
 
 
     def get_vps(self, rv:bool=True, ripe:bool=True):
