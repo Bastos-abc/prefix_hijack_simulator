@@ -144,8 +144,8 @@ if __name__ == '__main__':
     '''
     Test execution
     '''
-    input_file = 'input/20241001.as-rel2.txt.bz2'
-    date_target = '2024-10-01'
+    input_file = 'input/20240401.as-rel2.txt.bz2'
+    date_target = '2024-04-01'
     folder = './data'
     if not os.path.isdir(folder):
         os.mkdir(folder)
