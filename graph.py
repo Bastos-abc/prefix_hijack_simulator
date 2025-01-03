@@ -502,7 +502,6 @@ class Graph:
             return False
 
 
-
     def hijack(self, hijacker:int, prefix:str, fake_asp:list):
         '''
         Select a AS to hijack IP prefix
@@ -862,7 +861,7 @@ class Graph:
         :param asn_leg: the legitimate ASN to check the hijack
         :param asn_hjk: the hijecker ASN
         :param ases: a set of ASes to check the hijack
-        :param folder: folder to create a file with information
+        :param outfile: file to save information
         :return: None
         '''
         fake_asp = self.ases[asn_hjk].fake_asp

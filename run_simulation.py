@@ -178,7 +178,6 @@ if __name__ == '__main__':
     # path and name of CAIDA's AS relationship file
     date_file = '2024-02-01'
     input_file = get_caida_file(date_file, 'input')
-    exit()
     # File to load or save a list of hijackers
     # input_hjks = 'input/hijackers.pk'
     input_hjks = 'input/hijackers-{}.pk'.format(date_file)
@@ -195,7 +194,7 @@ if __name__ == '__main__':
     internet = load_internet(input_file)
     internet.get_vps()
     internet.get_country_ases()
-
+    hjks = load_hijackers(internet, nb_hijackers, clusters, input_hjks)
 
     # simulation (ROV disable, Type-0 and Type-1 hijacks)
     folder = './without_rov'
@@ -206,7 +205,6 @@ if __name__ == '__main__':
     print('Starting simulation.')
     start = time()
     # File to save simulation data
-    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
     run_simulation(internet1,hjks, analyse, outfile, n_threads, roa=False)
     print("All execution took {:.4f} seconds".format(time() - start), file=logs)
     del internet1
@@ -221,7 +219,6 @@ if __name__ == '__main__':
     print('Starting simulation.')
     start = time()
     # File to save simulation data
-    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
     r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=1)
     internet1.enable_rov(ases=r_ases)
     run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
@@ -237,7 +234,6 @@ if __name__ == '__main__':
     print('Starting simulation.')
     start = time()
     # File to save simulation data
-    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
     r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=0.75)
     internet1.enable_rov(ases=r_ases)
     run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
@@ -253,7 +249,6 @@ if __name__ == '__main__':
     print('Starting simulation.')
     start = time()
     # File to save simulation data
-    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
     r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=0.50)
     internet1.enable_rov(ases=r_ases)
     run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
@@ -269,7 +264,6 @@ if __name__ == '__main__':
     print('Starting simulation.')
     start = time()
     # File to save simulation data
-    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
     r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=0.25)
     internet1.enable_rov(ases=r_ases)
     run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
@@ -285,15 +279,12 @@ if __name__ == '__main__':
     print('Starting simulation.')
     start = time()
     # File to save simulation data
-    hjks = load_hijackers(internet1, nb_hijackers, clusters, input_hjks)
     r_ases = ases_rov(ases=internet1.get_ases(), date_target=date_file, folder='./data', min_ratio=0.01)
     internet1.enable_rov(ases=r_ases)
     run_simulation(internet1,hjks, analyse, outfile, n_threads, type0=True, type1=False, roa=True)
     print("All execution took {:.4f} seconds".format(time() - start), file=logs)
     del internet1
 
-    #asn_tmp = [615, 1772, 2749, 23799, 28301, 37130, 134620, 152095, 12891, 18220, 48421, 51733, 264792, 270710, 38157,
-    #           17841, 721, 2665, 4758, 1733, 27065, 27066, 210026, 52890, 27064, 139057, 4230, 2914, 13335]
     print('ASN;Neighbors;Total_Countries;Total_Continents;Customers;Customers_Countries;Customers_Continents;Peers;'
           'Peers_Countries;Peers_Continents;Providers;Providers_Countries;Providers_Continents')
     for n in asn_leg:

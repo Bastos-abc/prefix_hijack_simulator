@@ -31,24 +31,25 @@ def convert(files:list):
 
 if __name__ == '__main__':
     folder = './without_rov'
+    date = '2024-04-01'
     input_files_t0 = []
     input_files_t1 = []
     files = os.listdir(folder)
     for f in files:
         file = '{}/{}'
-        if f.endswith('type-0.csv'):
+        if f.endswith('type-0.csv') and date in f:
             input_files_t0.append(file.format(folder,f))
-        elif f.endswith('type-1.csv'):
+        elif f.endswith('type-1.csv') and date in f:
             input_files_t1.append(file.format(folder,f))
 
     lines = convert(input_files_t0)
-    output_file = '{}/as_path_dfoh_type-0'.format(folder)
+    output_file = '{}/{}_as_path_dfoh_type-0'.format(folder, date)
     with open(output_file, 'w') as out:
         out.writelines(lines)
     print('File created: {}'.format(output_file))
 
     lines = convert(input_files_t1)
-    output_file = '{}/as_path_dfoh_type-1'.format(folder)
+    output_file = '{}/{}_as_path_dfoh_type-1'.format(folder, date)
     with open(output_file, 'w') as out:
         out.writelines(lines)
     print('File created: {}'.format(output_file))
