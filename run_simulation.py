@@ -75,7 +75,7 @@ def run_analise(internet:Graph, victim:int, prefix:str, hijackers:list, outfile:
             print("[{}]Route from AS{} propagated in {:.4f} seconds.".format(victim,victim, time() - start), file=logs)
             for fake_asp in fakes_asp:
                 inter2 = deepcopy(internet)
-                print('[{}]####### Forged AS path:', victim, fake_asp)
+                print('[{}]####### Forged AS path: {}'.format(victim, fake_asp))
                 # Make prefix hijack
                 inter2.hijack(asn_hjk, prefixes_hjk, fake_asp)
                 start = time()

@@ -5,10 +5,10 @@ import random
 import pickle as pk
 import ssl
 import urllib.request
-#from logging import debug
-
+from time import time
 from netcalc_ipv4 import Prefix
 
+hijacks_log = open('hijacks_{}.log'.format(time()),'w')
 
 class AS(object):
     def __init__(self, asn:int, description:str=''):
@@ -107,6 +107,7 @@ class AS(object):
         new_prefixes = list()
         origen = asp[0]
         accept = False
+        accept_by = ''
         if not (origen in self.peers or origen in self.customers or origen in self.providers or origen in self.siblings):
             print('ERROR: This AS ({}) is not a neighbored.'.format(origen))
         elif self.asn in asp:
@@ -116,30 +117,49 @@ class AS(object):
             for prefix in prefixes:
                 accept = False
                 if not prefix in self.routes.keys():
-                    self.routes[prefix]= {'AS_path':asp, 'hijack':hijack}
-                    new_prefixes.append(prefix)
                     accept = True
+                    accept_by = 'New prefix'
                 else:
                     last_origen = self.routes[prefix]['AS_path'][0]
                     # Apply local pref based in Gao-Rexford model
-                    if ((origen in self.customers and last_origen not in self.customers) or
-                        ((origen in self.peers or origen in self.siblings) and last_origen in self.providers) or
-                        (origen in self.peers and last_origen in self.siblings)):
-                        self.routes[prefix]={'AS_path': asp, 'hijack': hijack}
-                        new_prefixes.append(prefix)
+                    if (origen in self.customers and last_origen not in self.customers):
                         accept = True
+                        accept_by = 'Customer'
+                    elif ((origen in self.peers or origen in self.siblings) and last_origen in self.providers):
+                        accept = True
+                        accept_by = 'Peer'
+                    elif (origen in self.peers and last_origen in self.siblings):
+                        accept = True
+                        accept_by = 'Peer'
                     # Using the shortest AS path
                     elif ((origen in self.customers and last_origen in self.customers) or
                           (origen in self.peers and last_origen in self.peers) or
                           (origen in self.providers and last_origen in self.providers) or
                           (origen in self.siblings and last_origen in self.siblings)):
                         if len(self.routes[prefix]['AS_path']) > len(asp):
-                            self.routes[prefix]= {'AS_path': asp, 'hijack': hijack}
-                            new_prefixes.append(prefix)
+                            if self.routes[prefix]['AS_path'].count(self.routes[prefix]['AS_path'][-1]) > 1:
+                                prep = 'Prepend x{}'.format(
+                                    self.routes[prefix]['AS_path'].count(self.routes[prefix]['AS_path'][-1]) - 1)
+                            else:
+                                prep = ''
+                            if debug:
+                                print('[AS path length] Route to [{}] changed {} -> {}. {}'.format(prefix, self.routes[prefix]['AS_path'], asp, prep))
                             accept = True
+                            accept_by = 'Shortest AS path'
                     else:
                         accept = False
-
+                if accept:
+                    if hijack:
+                        if prefix in self.routes.keys():
+                            old_asp = self.routes[prefix]['AS_path']
+                            prep = 'Prepend x{}'.format(old_asp.count(old_asp[-1]) - 1)
+                        else:
+                            old_asp=[]
+                            prep=''
+                        print('AS {} hijacked: prefix[{}] from [{}], old AS path {}, new AS path {}. {}'.
+                              format(self.asn, prefix, accept_by, old_asp, asp, prep), file=hijacks_log)
+                    self.routes[prefix] = {'AS_path': asp, 'hijack': hijack}
+                    new_prefixes.append(prefix)
             if accept:
                 if origen in self.customers:
                     announce = self.providers | self.customers | self.peers | self.siblings
@@ -149,6 +169,20 @@ class AS(object):
                 else:
                     print('ERROR: This AS ({}) is not a neighbored.'.format(origen))
         return announce, new_asp, new_prefixes
+
+
+    def get_route(self, prefix):
+        '''
+        Return AS path to prefix and information if the route was hijacked
+        :param: prefix
+        :return: AS path, hijack(True/False)
+        '''
+        if type(prefix) is str:
+            prefix = Prefix(prefix)
+        if prefix in self.routes.keys():
+            return (self.routes[prefix]['AS_path'], self.routes[prefix]['hijack'])
+        else:
+            return [], False
 
 
     def clear_routes(self):
@@ -261,7 +295,6 @@ class AS(object):
         '''
         prefixes = sorted(list(self.routes.keys()))
         line = '{}\t{} --> {}'
-        asp = ''
         r_type = 'leg'
         for prefix in prefixes:
             if self.routes[prefix]['hijack']:
@@ -288,6 +321,7 @@ class Graph:
         Create an object to represent AS connections.
         :param root_folder: Folder to save partial information (default = ./data)
         :param override: Set True to ignore and replace previous information if they exist
+        :param debug: True to show many information about the simulations, if False show a few information
         '''
         self.ases = dict()
         self.roa = dict()
@@ -306,6 +340,7 @@ class Graph:
         self.root_folder = root_folder
         self.override = override
         self.debug = debug
+        self.prepend_origin = dict()
 
 
     def add_connections(self, input_file:str):
@@ -412,6 +447,7 @@ class Graph:
     def get_as_infor(self, asn:int):
         '''
         Return AS information
+        :param asn: ASN (int)
         :return: Country, Continent and degree (number of neighbors)
         '''
         country = self.ases[asn].country
@@ -423,6 +459,7 @@ class Graph:
     def get_neighbors_stats(self, asn:int):
         '''
         Return AS information
+        :param asn: ASN (int)
         :return: Country, Continent and degree (number of neighbors)
         '''
         if asn not in self.ases.keys():
@@ -436,18 +473,24 @@ class Graph:
         countries_c = set()
         continents_c = set()
         for n in customers:
-            countries_c.add(self.ases[n].country)
-            continents_c.add(self.ases[n].continent)
+            if self.ases[n].country != 'Unkown':
+                countries_c.add(self.ases[n].country)
+            if self.ases[n].continent != 'Unkown':
+                continents_c.add(self.ases[n].continent)
         countries_p = set()
         continents_p = set()
         for n in peers:
-            countries_p.add(self.ases[n].country)
-            continents_p.add(self.ases[n].continent)
+            if self.ases[n].country != 'Unkown':
+                countries_p.add(self.ases[n].country)
+            if self.ases[n].continent != 'Unkown':
+                continents_p.add(self.ases[n].continent)
         countries_pr = set()
         continents_pr = set()
         for n in providers:
-            countries_pr.add(self.ases[n].country)
-            continents_pr.add(self.ases[n].continent)
+            if self.ases[n].country != 'Unkown':
+                countries_pr.add(self.ases[n].country)
+            if self.ases[n].continent != 'Unkown':
+                continents_pr.add(self.ases[n].continent)
         countries = countries_c | countries_p | countries_pr
         continents = continents_c | continents_p | continents_pr
         result = {'Neighbors':{'Number':len(neighbors),'Countries':len(countries), 'Continents':len(continents)},
@@ -516,12 +559,13 @@ class Graph:
             print('ERROR: AS{} not found in the graph!!'.format(hijacker))
 
 
-    def route_propagate(self, asn:int, hijack:bool=False, ignore_model_sometimes:bool=False):
+    def route_propagate(self, asn:int, hijack:bool=False, ignore_model_sometimes:bool=False, prepend_origin:dict=dict()):
         '''
         Announce the prefixes from the AS, legitimate or hijacked
         :param asn: ASN to announce the prefixes
         :param hijack: Is a hijacked Prefix? (True or False)
         :param ignore_model_sometimes: Ignore Gao-Rexford model when there are no connections to all ASes
+        :param prepend_origin: How many more times the origin AS will prepend the first ASN
         :return: None
         '''
         ases_new_route = set()
@@ -535,11 +579,15 @@ class Graph:
             prefixes = self.ases[asn].get_prefixes()
             asp = [asn]
             self.leg_announce = [asn, asp, prefixes]
-
+            self.prepend_origin[asn] = prepend_origin
+        if len(self.leg_announce)>0:
+            asn_leg = self.leg_announce[0]
+        else:
+            asn_leg = 0
         list_ases = self.ases[asn].customers | self.ases[asn].providers | self.ases[asn].peers
         nexts_ases = list()
         if len(prefixes)==0:
-            print('No {} route to propagate from AS{}.'.format(('hijack' if hijack else 'legitimate'), asn))
+            print('[{}]No {} route to propagate from AS{}.'.format(asn_leg, ('hijack' if hijack else 'legitimate'), asn))
         else:
             for n in list_ases:
                 nexts_ases.append([n, copy(asp), prefixes])
@@ -554,20 +602,28 @@ class Graph:
                                 prefix_add.append(p)
                             else:
                                 if self.debug:
-                                    print('ROV: AS{} reject prefix {} originated by AS{}.'.format(n_asn, p, asp[-1]))
+                                    print('[{}]ROV: AS{} reject prefix {} originated by AS{}.'.format(asn_leg,n_asn, p, asp[-1]))
                 else:
                     prefix_add = prefixes
+                if len(asp)==1:
+                    if n_asn in prepend_origin.keys():
+                        prepend = prepend_origin[n_asn]
+                        p_asn=asp[-1]
+                        for p in range(prepend):
+                            asp.insert(0, p_asn)
+                        if self.debug:
+                            print('[{}]Prefix announce with prepend x{} to AS{}'.format(asn_leg,len(asp)-1,n_asn))
                 tmp_ases, tmp_asp, tmp_prefixes = self.ases[n_asn].add_route(prefix_add, asp, hijack,debug=self.debug)
                 for ta in tmp_ases:
                     nexts_ases.append([ta, tmp_asp, tmp_prefixes])
             without_route = without_route - ases_new_route
             if self.debug:
-                print("{} routes propagated from the AS{} to {} ASes".format(('Hijacked' if hijack else 'Legitimate'), asn, len(ases_new_route)))
-                print('{} AS(es) did not receive the route from the AS{}'.format(len(without_route), asn))
+                print("[{}]{} routes propagated from the AS{} to {} ASes".format(asn_leg,('Hijacked' if hijack else 'Legitimate'), asn, len(ases_new_route)))
+                print('[{}]{} AS(es) did not receive the route from the AS{}'.format(asn_leg,len(without_route), asn))
             if ignore_model_sometimes:
                 more_routes = self.ignore_model_sometimes(prefixes)
                 if self.debug:
-                    print('More {} ASes added the route breaking Gao-Rexford model'.format(len(more_routes)))
+                    print('[{}]More {} ASes added the route breaking Gao-Rexford model'.format(asn_leg, len(more_routes)))
         return without_route
 
 
@@ -652,10 +708,10 @@ class Graph:
         :return: None
         '''
         if percentage==0 and len(ases)==0:
-            print('ERROR: Informe the percentage of ASes to enable ROV or informe the list of ASes to enable.')
+            print('ERROR: Inform the percentage of ASes to enable ROV or inform the list of ASes to enable.')
             return None
         elif percentage>0 and len(ases)>0:
-            print('ERROR: Informe the percentage of ASes to enable ROV or informe the list of ASes to enable.')
+            print('ERROR: Inform the percentage of ASes to enable ROV or inform the list of ASes to enable.')
             return None
         if (percentage > 100 or percentage < 0) and len(ases)==0:
             print('Set percentage as a value between 1 and 100(%) or between 0 and 1.')
