@@ -7,16 +7,16 @@ Os arquivos *run_simulation.py* e *run_simulation_with_prepend.py* possuem exemp
 O arquivo *input/ases_prefixes.csv* contém a relação de ASes que serão as vítimas na simulação e deve seguir o exemplo de formatação abaixo:
 
 - input/ases_prefix.csv<br/>
-ASN;Prefix;Country;Desc_AS/
-1;10.1.1.0/24;br;AS 1/
-2;10.2.2.0/24;ar; AS 2/
+ASN;Prefix;Country;Desc_AS<br/>
+1;10.1.1.0/24;br;AS 1<br/>
+2;10.2.2.0/24;ar; AS 2<br/>
 
 Para simulação com prepend, um arquivo com as informações do AS, seu vizinho e a quantidade de vezes a mais que o ASN será inserido deve ser gerado com tools/create_prepend_file_to_simulation.py a partir dos arquivos já baixados dos coletores (https://archive.routeviews.org/ e/ou https://ris.ripe.net/docs/mrt/) ou gerado manualmente com a seguinte formatação:
 
--input/asn_prepend_2024-04-01.csv/
-AS;Neighbor;Prepend/
-1;2;2/
-1;3;1/
-1;6;2/
-2;5;2/
-2;3;1/
+-input/asn_prepend_2024-04-01.csv<br/>
+AS;Neighbor;Prepend<br/>
+1;2;2<br/>
+1;3;1<br/>
+1;6;2<br/>
+2;5;2<br/>
+2;3;1<br/>
