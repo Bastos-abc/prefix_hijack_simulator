@@ -9,7 +9,7 @@ O arquivo *input/ases_prefixes.csv* contém a relação de ASes que serão as v�
 ```
 ASN;Prefix;Country;Desc_AS
 1;10.1.1.0/24;br;AS 1
-2;10.2.2.0/24;ar; AS 2
+2;10.2.2.0/24;ar;AS 2
 ```
 Para simulação com prepend, um arquivo com as informações do AS, seu vizinho e a quantidade de vezes a mais que o ASN será inserido deve ser gerado com tools/create_prepend_file_to_simulation.py a partir dos arquivos já baixados dos coletores (https://archive.routeviews.org/ e/ou https://ris.ripe.net/docs/mrt/) ou gerado manualmente com a seguinte formatação mantendo a linha com o título das colunas:
 
