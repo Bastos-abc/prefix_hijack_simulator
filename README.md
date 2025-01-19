@@ -4,14 +4,14 @@ Este código tem por finalidade simular a propagação de diversos tipos de sequ
 Para a criação do ambiente é utilizada as informações de relacionamento entre ASes disponiblizada pela CAIDA (https://publicdata.caida.org/datasets/as-relationships/serial-2/).
 
 Os arquivos *run_simulation.py* e *run_simulation_with_prepend.py* possuem exemplos de simulação, mas para sua execução os arquivos de entrada com a relação de ASes e seus prefixos para a simulação devem ser alimentados. 
-O arquivo *input/ases_prefixes.csv* contém a relação de ASes que serão as vítimas na simulação e deve seguir o exemplo de formatação abaixo:
+O arquivo *input/ases_prefixes.csv* contém a relação de ASes que serão as vítimas na simulação e deve seguir o exemplo de formatação abaixo mantendo a linha com o título das colunas:
 
 - input/ases_prefix.csv<br/>
 ASN;Prefix;Country;Desc_AS<br/>
 1;10.1.1.0/24;br;AS 1<br/>
 2;10.2.2.0/24;ar; AS 2<br/>
 
-Para simulação com prepend, um arquivo com as informações do AS, seu vizinho e a quantidade de vezes a mais que o ASN será inserido deve ser gerado com tools/create_prepend_file_to_simulation.py a partir dos arquivos já baixados dos coletores (https://archive.routeviews.org/ e/ou https://ris.ripe.net/docs/mrt/) ou gerado manualmente com a seguinte formatação:
+Para simulação com prepend, um arquivo com as informações do AS, seu vizinho e a quantidade de vezes a mais que o ASN será inserido deve ser gerado com tools/create_prepend_file_to_simulation.py a partir dos arquivos já baixados dos coletores (https://archive.routeviews.org/ e/ou https://ris.ripe.net/docs/mrt/) ou gerado manualmente com a seguinte formatação mantendo a linha com o título das colunas:
 
 - input/asn_prepend_2024-04-01.csv<br/>
 AS;Neighbor;Prepend<br/>
