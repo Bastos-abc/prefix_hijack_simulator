@@ -13,7 +13,7 @@ ASN;Prefix;Country;Desc_AS<br/>
 
 Para simulação com prepend, um arquivo com as informações do AS, seu vizinho e a quantidade de vezes a mais que o ASN será inserido deve ser gerado com tools/create_prepend_file_to_simulation.py a partir dos arquivos já baixados dos coletores (https://archive.routeviews.org/ e/ou https://ris.ripe.net/docs/mrt/) ou gerado manualmente com a seguinte formatação:
 
--input/asn_prepend_2024-04-01.csv<br/>
+- input/asn_prepend_2024-04-01.csv<br/>
 AS;Neighbor;Prepend<br/>
 1;2;2<br/>
 1;3;1<br/>
