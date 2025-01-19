@@ -6,7 +6,7 @@ Para a criação do ambiente é utilizada as informações de relacionamento ent
 Os arquivos *run_simulation.py* e *run_simulation_with_prepend.py* possuem exemplos de simulação, mas para sua execução os arquivos de entrada com a relação de ASes e seus prefixos para a simulação devem ser alimentados. 
 O arquivo *input/ases_prefixes.csv* contém a relação de ASes que serão as vítimas na simulação e deve seguir o exemplo de formatação abaixo:
 
-- input/ases_prefix.csv/
+- input/ases_prefix.csv<br/>
 ASN;Prefix;Country;Desc_AS/
 1;10.1.1.0/24;br;AS 1/
 2;10.2.2.0/24;ar; AS 2/
