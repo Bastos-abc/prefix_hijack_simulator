@@ -21,7 +21,7 @@ AS;Neighbor;Prepend
 2;5;2
 2;3;1
 ```
-Os arquivos podem ser baixados dos coletores com o código *tools/download_files_from_colectors.py*, no exemplo abaixo será baixado os arquivos somente a primeira RIB (-t rib) de 01/02/2024 (-y 2024 -m 02 -d 01) de somente 1 dia (-D 1):
+Os arquivos podem ser baixados dos coletores com o código *tools/download_files_from_colectors.py*, no exemplo abaixo será baixado a primeira RIB (-t rib) de todos os coletores relacionados no arquivo *config.py* do dia 01/02/2024 (-y 2024 -m 02 -d 01) de somente 1 dia (-D 1):
 ```
 python3 download_files_from_colectors.py -y 2024 -m 02 -d 01 -D 1 -t rib
 ```
