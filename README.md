@@ -1,5 +1,7 @@
 # Prefix Hijack Simulator
 
+Material relacionado ao trabalho publicado -> https://sol.sbc.org.br/index.php/sbrc/article/view/35124
+
 Este código tem por finalidade simular a propagação de diversos tipos de sequestro de prefixo.
 Para a criação do ambiente é utilizada as informações de relacionamento entre ASes disponiblizada pela CAIDA (https://publicdata.caida.org/datasets/as-relationships/serial-2/).
 
